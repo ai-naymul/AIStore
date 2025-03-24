@@ -4,26 +4,20 @@ import requests
 import hashlib
 from bs4 import BeautifulSoup
 import time
-
-
 import scraper_utils
 from scraper_root import Scraper
-
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.service import Service as FirefoxService
-
-from pymongo import MongoClient, errors
 from datetime import datetime
 
 import numpy as np
 import pprint as pp
 
-from log_config import logger
-
+import logging
 import platform
 system_platform = platform.system()
 
