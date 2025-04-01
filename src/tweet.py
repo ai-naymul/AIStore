@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 class TweetClient:
     def __init__(self, api_key, api_secret, access_token, access_secret, bearer_token):
         self.auth = tweepy.OAuth1UserHandler(
-            api_key, api_secret, access_token, access_secret, bearer_token
+            api_key, api_secret, access_token, access_secret
         )
         self.api = tweepy.API(self.auth)
         self.client = tweepy.Client(
