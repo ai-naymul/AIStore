@@ -21,30 +21,35 @@ class ProductHunt():
         for section in sections:
             tool_info = {}
             
-            # Extract tool link
-            link_tag = section.find('a', {'data-test': lambda x: x and x.startswith('post-name')})
-            if link_tag and 'href' in link_tag.attrs:
-                tool_info['tool_link'] = link_tag['href']
-            
-            # Extract tool name
-            if link_tag:
-                # Remove any SVG elements that might be inside the tag
-                for svg in link_tag.find_all('svg'):
+            # Extract tool link and name
+            name_tag = section.find('a', {'data-test': lambda x: x and x.startswith('post-name')})
+            if name_tag and 'href' in name_tag.attrs:
+                tool_info['tool_link'] = name_tag['href']
+                # Remove SVG elements to get clean text
+                for svg in name_tag.find_all('svg'):
                     svg.decompose()
-                tool_info['tool_name'] = link_tag.text.strip()
+                tool_info['tool_name'] = name_tag.text.strip()
             
             # Extract short description
             description_tag = section.find('a', {'class': 'text-16 font-normal text-dark-gray text-secondary'})
             if description_tag:
                 tool_info['short_description'] = description_tag.text.strip()
             
-            # Extract comments and upvotes
-            # Find all the numeric value containers
-            value_containers = section.find_all('div', {'class': 'text-14 font-semibold text-dark-gray leading-none text-gray-700 dark:text-gray-dark-300'})
+            # Find all buttons to extract comments and upvotes
+            buttons = section.find_all('button', {'type': 'button'})
             
-            if len(value_containers) >= 2:
-                tool_info['comments'] = value_containers[0].text.strip()
-                tool_info['upvotes'] = value_containers[1].text.strip()
+            # Extract comments (from first button)
+            if len(buttons) >= 1:
+                comments_div = buttons[0].find('div', {'class': 'text-14 font-semibold text-dark-gray leading-none'})
+                if comments_div:
+                    tool_info['comments'] = comments_div.text.strip()
+            
+            # Extract upvotes (from second button - the vote button)
+            if len(buttons) >= 2:
+                vote_button = buttons[1]
+                upvotes_div = vote_button.find('div', {'class': 'text-14 font-semibold text-dark-gray leading-none'})
+                if upvotes_div:
+                    tool_info['upvotes'] = upvotes_div.text.strip()
             
             # Extract categories
             categories = []
