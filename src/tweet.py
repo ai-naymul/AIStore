@@ -1,25 +1,49 @@
 import tweepy
-import os
-from dotenv import load_dotenv
 import logging
-load_dotenv()
+import time
 
-# Load enviroment variables
-API_KEY = os.getenv("API_KEY")
-BEARER_TOKEN = os.getenv("BEARER_TOKEN")
-API_KEY_SECRET = os.getenv("API_KEY_SECRET")
-ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
-ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-class TweetClient():
-    def __init__(self):
-        self.client = tweepy.Client(bearer_token=BEARER_TOKEN, consumer_key=API_KEY, consumer_secret=API_KEY_SECRET, access_token=ACCESS_TOKEN, access_token_secret=ACCESS_TOKEN_SECRET)
-    
-    def tweet(self, post: str):
+class TweetClient:
+    def __init__(self, api_key, api_secret, access_token, access_secret, bearer_token):
+        self.auth = tweepy.OAuth1UserHandler(
+            api_key, api_secret, access_token, access_secret
+        )
+        self.api = tweepy.API(self.auth)
+        self.client = tweepy.Client(
+            bearer_token=bearer_token,
+            consumer_key=api_key,
+            consumer_secret=api_secret,
+            access_token=access_token,
+            access_token_secret=access_secret
+        )
+        
+    def post_tweet(self, text):
+        """Post a tweet with the given text"""
         try:
-            response = self.client.create_tweet(text=post)
-            if response:
-                logging.info(f"Posted the tweet with the following post: {post}")
-                return response
+            response = self.client.create_tweet(text=text)
+            logger.info(f"Posted tweet successfully: {text[:50]}...")
+            return response
         except Exception as e:
-            logging.error(f"Error posting tweet with error: {str(e)}")
+            logger.error(f"Error posting tweet: {str(e)}")
+            return None
+    
+    def post_multiple_tweets(self, tweets, delay_seconds=300):
+        """Post multiple tweets with a delay between each"""
+        successful_tweets = 0
+        
+        for tweet in tweets:
+            if not tweet:
+                continue
+                
+            result = self.post_tweet(tweet)
+            if result:
+                successful_tweets += 1
+                
+            # Wait between tweets to avoid rate limits
+            if successful_tweets < len(tweets):
+                logger.info(f"Waiting {delay_seconds} seconds before next tweet...")
+                time.sleep(delay_seconds)
+        
+        return successful_tweets

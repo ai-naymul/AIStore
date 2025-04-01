@@ -1,30 +1,44 @@
-from playwright.sync_api import sync_playwright, Playwright
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
+import logging
 
-class ProductHunt():
-    def __init__(self, playwright: Playwright):
-        self.chromium = playwright.firefox
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+class ProductHunt:
+    @staticmethod
+    def run(url):
+        logger.info(f"Scraping Product Hunt from URL: {url}")
+        with sync_playwright() as playwright:
+            browser = playwright.firefox.launch()
+            page = browser.new_page()
+            try:
+                page.goto(url, timeout=60000)
+                # Wait for content to load
+                page.wait_for_selector('section[data-test^="post-item"]', timeout=30000)
+                content = page.content()
+                tools = ProductHunt.process_html(content=content)
+                logger.info(f"Found {len(tools)} tools")
+                return tools
+            except Exception as e:
+                logger.error(f"Error scraping Product Hunt: {str(e)}")
+                return []
+            finally:
+                browser.close()
     
-    def run(self, url):
-        chromium = playwright.firefox # or "firefox" or "webkit".
-        browser = chromium.launch()
-        page = browser.new_page()
-        page.goto(url)
-        content = page.content()
-        browser.close()
-        return content
-    
-    def process_html(self, content):
+    @staticmethod
+    def process_html(content):
         tools_info = []
         soup = BeautifulSoup(content, 'html.parser')
-        sections = soup.find_all('section', {'data-test': lambda x: x and x.startswith('post-item')})
+        sections = soup.find_all('section', attrs={'data-test': lambda x: x and 'post-item' in x})
+        
         for section in sections:
             tool_info = {}
             
             # Extract tool link and name
             name_tag = section.find('a', {'data-test': lambda x: x and x.startswith('post-name')})
             if name_tag and 'href' in name_tag.attrs:
-                tool_info['tool_link'] = name_tag['href']
+                tool_info['tool_link'] = "https://www.producthunt.com" + name_tag['href']
                 # Remove SVG elements to get clean text
                 for svg in name_tag.find_all('svg'):
                     svg.decompose()
@@ -40,14 +54,14 @@ class ProductHunt():
             
             # Extract comments (from first button)
             if len(buttons) >= 1:
-                comments_div = buttons[0].find('div', {'class': 'text-14 font-semibold text-dark-gray leading-none'})
+                comments_div = buttons[0].find('div', {'data-sentry-element': 'Component', 'data-sentry-component': 'LegacyText'})
                 if comments_div:
                     tool_info['comments'] = comments_div.text.strip()
             
             # Extract upvotes (from second button - the vote button)
             if len(buttons) >= 2:
                 vote_button = buttons[1]
-                upvotes_div = vote_button.find('div', {'class': 'text-14 font-semibold text-dark-gray leading-none'})
+                upvotes_div = vote_button.find('div', {'data-sentry-element': 'Component', 'data-sentry-component': 'LegacyText'})
                 if upvotes_div:
                     tool_info['upvotes'] = upvotes_div.text.strip()
             
@@ -59,7 +73,5 @@ class ProductHunt():
             tool_info['categories'] = categories
             
             tools_info.append(tool_info)
+        
         return tools_info
-
-with sync_playwright() as playwright:
-    ProductHunt.run(playwright)
