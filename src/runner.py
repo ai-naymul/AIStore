@@ -61,6 +61,19 @@ def main():
             if tweet_text:
                 tweets.append(tweet_text)
         
+        def debug_env_vars():
+            """Safely log environment variables without exposing secrets"""
+            print("\n=== Environment Variables ===")
+            print(f"PRODUCT_HUNT_URL: {'exists' if os.getenv('PRODUCT_HUNT_URL') else 'MISSING'}")
+            print(f"GEMINI_API_KEY: {'exists' if os.getenv('GEMINI_API_KEY') else 'MISSING'}")
+            print(f"TWITTER_API_KEY: {'exists' if os.getenv('TWITTER_API_KEY') else 'MISSING'}")
+            print(f"TWITTER_API_SECRET: {'exists' if os.getenv('TWITTER_API_SECRET') else 'MISSING'}")
+            print(f"TWITTER_ACCESS_TOKEN: {'exists' if os.getenv('TWITTER_ACCESS_TOKEN') else 'MISSING'}")
+            print(f"TWITTER_ACCESS_SECRET: {'exists' if os.getenv('TWITTER_ACCESS_SECRET') else 'MISSING'}")
+            print(f"BEARER_TOKEN: {'exists' if os.getenv('BEARER_TOKEN') else 'MISSING'}\n")
+
+        # Call this before initializing Twitter client
+        debug_env_vars()
         # Initialize Twitter client
         twitter_client = TweetClient(
             api_key=TWITTER_API_KEY,
