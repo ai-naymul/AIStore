@@ -51,4 +51,4 @@ jobs:
         TWITTER_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         TWITTER_ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
         BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
-      run: python runner.py
+      run: python src/runner.py
